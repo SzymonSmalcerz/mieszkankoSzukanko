@@ -23,6 +23,10 @@
           <input id="postalCode" type="text" v-model="postalCode">
         </div>
         <div class="field">
+          <label for="price">Price (in PLN)*</label>
+          <input id="price" type="number" v-model="price">
+        </div>
+        <div class="field">
           <label for="addInfo">Additional info*</label>
           <input id="addInfo" type="text" v-model="addInfo">
         </div>
@@ -60,6 +64,7 @@ export default {
       street : "",
       postalCode : "",
       addInfo : "",
+      price : 0,
       feedback : "",
       imagesData : [],
       lat : null,
@@ -75,8 +80,8 @@ export default {
     closeMap(){
       document.getElementById('map').style.display = "none";
       document.getElementById('btnSave').style.display = "none";
-      this.lat = this.marker.position.pos.lat();
-      this.lng = this.marker.position.pos.lng();
+      this.lat = this.marker.position.lat();
+      this.lng = this.marker.position.lng();
     },
     onFilePicked (event) {
       const files = event.target.files;
@@ -92,7 +97,8 @@ export default {
       fileReader.readAsDataURL(files[0]);
     },
     addNewLocation() {
-      if(this.title && this.city && this.street && this.addInfo && this.lat){
+      // if(this.title && this.city && this.street && this.addInfo && this.lat && this.price){
+        if(true){
         this.feedback = null;
         db.collection('locations').add({
           title: this.title,
@@ -102,9 +108,10 @@ export default {
           postalCode: this.postalCode,
           street: this.street,
           city: this.city,
-          photoUrls: this.imagesData.map(photoData => photoData.key),
+          photoUrls: [],
           lat : this.lat,
-          lng : this.lng
+          lng : this.lng,
+          price : this.price
         }).then(doc => {
           this.title = "";
           this.addInfo = "";
@@ -112,26 +119,37 @@ export default {
           this.street = "";
           this.postalCode = "";
           this.feedback = "";
+          this.price = 0;
+          let urls = [];
           this.imagesData.forEach((image, i) => {
-            firebase.storage().ref(image.key).put(image.photo);
+            firebase.storage().ref(image.key).put(image.photo).then(fileData => {
+              return fileData.ref.getDownloadURL();
+            }).then(downloadURL => {
+              urls.push(downloadURL);
+              db.collection('locations').doc(doc.id).update({
+                photoUrls : urls
+              });
+            });
           });
         });
       } else {
-        this.feedback = 'Please fill in all fields'
+        this.feedback = 'Please fill in all mandatory fields'
       }
     },
     removeImg(url) {
       this.imagesData = this.imagesData.filter(imgData => imgData.url != url);
     },
     renderMap() {
+      let lat = 50;
+      let lng = 50;
       if(navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(pos => {
-          this.lat = pos.coords.latitude;
-          this.lng = pos.coords.longitude;
+          lat = pos.coords.latitude;
+          lng = pos.coords.longitude;
         });
       };
       const map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: this.lat || 50, lng: this.lng || 50 },
+        center: { lat: lat, lng: lng },
         zoom: 6,
         maxZoom: 15,
         minZoom: 3,
