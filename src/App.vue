@@ -6,6 +6,7 @@
 </template>
 
 <script>
+  import ExpandableImage from '@/components/other/ExpandableImage'
   import Navbar from '@/components/layout/Navbar'
   export default {
     name: 'App',
@@ -40,5 +41,23 @@
   }
   .margin10 {
     margin: 10px;
+  }
+  .container li:hover {
+    background-color: rgba(255,255,255,0.5);
+  }
+  .card-elements {
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .card-element {
+    display: inline-block;
+    width: 48%;
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: 0;
+    margin-right: 0;
+    height: 20%
   }
 </style>

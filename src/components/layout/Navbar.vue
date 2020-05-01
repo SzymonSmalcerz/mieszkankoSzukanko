@@ -6,6 +6,7 @@
         <ul class="right">
           <li v-if="!user"><router-link :to="{ name: 'Signup' }">Signup</router-link></li>
           <li v-if="!user"><router-link :to="{ name: 'Login' }">Login</router-link></li>
+          <li v-if="user"><router-link :to="{ name: 'NewLocation' }">Add new location</router-link></li>
           <li v-if="user"><a>{{ user.email }}</a></li>
           <li v-if="user"><a @click="logout">Logout</a></li>
         </ul>
@@ -45,5 +46,4 @@ export default {
 </script>
 
 <style>
-
 </style>

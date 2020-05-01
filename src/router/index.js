@@ -5,6 +5,7 @@ import Signup from '@/components/auth/Signup'
 import Login from '@/components/auth/Login'
 import ViewProfile from '@/components/profile/ViewProfile'
 import NewLocation from '@/components/location/NewLocation'
+import ViewLocation from '@/components/location/ViewLocation'
 import firebase from 'firebase'
 
 Vue.use(Router)
@@ -38,9 +39,17 @@ const router = new Router({
       }
     },
     {
-      path: '/loc/:id',
+      path: '/location',
       name: 'NewLocation',
       component: NewLocation,
+      meta: {
+        requiresAuth: true
+      }
+    },
+    {
+      path: '/location/:id',
+      name: 'ViewLocation',
+      component: ViewLocation,
       meta: {
         requiresAuth: true
       }
