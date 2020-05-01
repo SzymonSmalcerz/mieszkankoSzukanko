@@ -13,6 +13,7 @@
     "firebase": "^7.14.1",
     "material-design-icons-iconfont": "^5.0.1",
     "slugify": "^1.4.0",
+    "v-img": "^0.2.0",
     "vue": "^2.5.2",
     "vue-router": "^3.0.1"
   },
