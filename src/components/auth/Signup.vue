@@ -55,11 +55,10 @@ export default {
           // this alias does not yet exists in the db
             firebase.auth().createUserWithEmailAndPassword(this.email, this.password)
             .then(authDoc => {
-              let user = authDoc.user;
               ref.set({
                 alias: this.alias,
                 geolocation: null,
-                user_id: user.uid
+                user_id: authDoc.user.uid
               })
             }).then(() => {
               this.$router.push({ name: 'GMap' })
