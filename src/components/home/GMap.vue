@@ -49,14 +49,18 @@
 <script>
 import firebase from 'firebase'
 import db from '@/firebase/init'
+import saveState from 'vue-save-state';
 
 export default {
   name: 'GMap',
+  mixins: [saveState],
   data() {
     return{
       lat: 0,
       lng: 0,
-      userMarker : null,
+      // userMarker : null,
+      userLat : 0,
+      userLng : 0,
       searchData : {
         priceMin : null,
         priceMax : null,
@@ -66,33 +70,16 @@ export default {
         pets : false
       },
       allLocations : [],
-      locations : []
+      locations : [],
+      loaded : false
     }
   },
   methods: {
     search() {
       this.toggleSearchCriteria();
-      let that = this;
-      this.locations = this.allLocations.filter((loc) => {
-        let isOk = true;
-        if(this.searchData.priceMin) {
-          isOk = isOk && parseInt(loc.price) > this.searchData.priceMin;
-        }
-        if(this.searchData.priceMax) {
-          isOk = isOk && parseInt(loc.price) < this.searchData.priceMax;
-        }
-        if(this.searchData.smoking) {
-          isOk = isOk && loc.smoking;
-        }
-        if(this.searchData.pets) {
-          isOk = isOk && loc.pets;
-        }
-        if(this.searchData.maxDistance) {
-          isOk = isOk && this.distance(this.userMarker.position.lat(), this.userMarker.position.lng(), loc.lat, loc.lng) < this.searchData.maxDistance;
-        }
-        return isOk;
-      })
+      this.filterLocations();
       this.renderMap();
+      this.renderLocations();
     },
     toggleSearchCriteria() {
       let searchOn = document.getElementById('searchCriteria').style.display == "block";
@@ -110,8 +97,10 @@ export default {
       let user = firebase.auth().currentUser;
       if(navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(pos => {
-          this.lat = pos.coords.latitude;
-          this.lng = pos.coords.longitude;
+          if(!this.lat) {
+            this.lat = pos.coords.latitude;
+            this.lng = pos.coords.longitude;
+          }
           this.getLocations();
           db.collection('users').where('user_id', '==', user.uid).get()
           .then(snapshot => {
@@ -128,7 +117,7 @@ export default {
       }
     },
     renderMap() {
-      const map = new google.maps.Map(document.getElementById('map'), {
+      this.map = new google.maps.Map(document.getElementById('map'), {
         center: { lat: this.lat, lng: this.lng },
         zoom: 6,
         maxZoom: 15,
@@ -140,7 +129,7 @@ export default {
           lat: this.lat,
           lng: this.lng
         },
-        map,
+        map : this.map,
         draggable: true,
         title: 'Your current position',
         icon: {
@@ -148,6 +137,23 @@ export default {
         }
       });
 
+      let that = this;
+      google.maps.event.addListener(this.userMarker,'drag',() => {
+        that.lat = that.userMarker.position.lat();
+        that.lng = that.userMarker.position.lng();
+      });
+
+      if(!this.loaded) {
+        var infowindow = new google.maps.InfoWindow({
+          content:"Yout current position - you can drag this marker!"
+        });
+        infowindow.open(map,that.userMarker);
+        this.loaded = true;
+      }
+    },
+    renderLocations() {
+      console.log("RENDERING LOCATIONS");
+      console.log(this.locations);
       this.locations.forEach(data => {
         if(data.lat && data.lng){
           let marker = new google.maps.Marker({
@@ -155,17 +161,41 @@ export default {
               lat: data.lat,
               lng: data.lng
             },
-            map,
+            map : this.map,
             title: data.title
           });
-          // add click event to marker
           marker.addListener('click', () => {
             this.$router.push({ name: 'ViewLocation', params: { id: data.id }})
           });
         }
+      });
+    },
+    filterLocations() {
+      let that = this;
+      console.log("filter called");
+      this.locations = this.allLocations.filter((loc) => {
+        let isOk = true;
+        if(this.searchData.priceMin) {
+          isOk = isOk && parseInt(loc.price) > this.searchData.priceMin;
+        }
+        if(this.searchData.priceMax) {
+          isOk = isOk && parseInt(loc.price) < this.searchData.priceMax;
+        }
+        if(this.searchData.smoking) {
+          isOk = isOk && loc.smoking;
+        }
+        if(this.searchData.pets) {
+          isOk = isOk && loc.pets;
+        }
+        if(this.searchData.maxDistance) {
+          isOk = isOk && this.distance(this.userMarker.position.lat(), this.userMarker.position.lng(), loc.lat, loc.lng) < this.searchData.maxDistance;
+        }
+        console.log(isOk);
+        return isOk;
       })
     },
     getLocations() {
+      this.locations = [];
       db.collection('locations').get().then(locations => {
         locations.docs.forEach(doc => {
           this.locations.push({
@@ -175,6 +205,8 @@ export default {
         });
         this.allLocations = [...this.locations];
         this.renderMap();
+        this.filterLocations();
+        this.renderLocations();
       });
     },
     distance(lat1, lon1, lat2, lon2) {
@@ -196,6 +228,11 @@ export default {
     		dist = dist * 1.609344;
     		return dist;
     	}
+    },
+    getSaveStateConfig() {
+      return {
+          'cacheKey': 'GMap'
+      };
     }
   },
   mounted() {
