@@ -4,62 +4,62 @@
       <button class="btn btn-large deep-purple" @click.prevent="showMap">Save <i class="fa fa-floppy-o"></i></button>
     </div>
     <div class="my-container container" id="mainContainer">
-      <form class="card-panel" @submit.prevent="addNewLocation">
-        <h2 class="center deep-purple-text">Add new location</h2>
+      <form class="card-panel" @submit.prevent="editData">
+        <h2 class="center deep-purple-text">EditLocation</h2>
         <div class="field">
           <label for="title">Title*</label>
-          <input id="title" type="text" v-model="title">
+          <input id="title" type="text" v-model="location.title">
         </div>
         <div class="field">
           <label for="city">City*</label>
-          <input id="city" type="text" v-model="city">
+          <input id="city" type="text" v-model="location.city">
         </div>
         <div class="field">
           <label for="street">Street*</label>
-          <input id="street" type="text" v-model="street">
+          <input id="street" type="text" v-model="location.street">
         </div>
         <div class="field">
           <label for="postalCode">Postal code</label>
-          <input id="postalCode" type="text" v-model="postalCode">
+          <input id="postalCode" type="text" v-model="location.postalCode">
         </div>
         <div class="field">
           <label for="price">Price (in PLN)*</label>
-          <input id="price" type="number" v-model="price">
+          <input id="price" type="number" v-model="location.price">
         </div>
         <div class="field">
           <label for="surface">Surface of apartment*</label>
-          <input id="surface" type="number" v-model="surface">
+          <input id="surface" type="number" v-model="location.surface">
         </div>
         <div class="field">
-          <label for="addInfo">Additional info*</label>
-          <input id="addInfo" type="text" v-model="addInfo">
+          <label for="additionalInfo">Additional info*</label>
+          <input id="additionalInfo" type="text" v-model="location.additionalInfo">
         </div>
         <div class="field">
           <label>
-              <input type="checkbox" v-model="smoking">
+              <input type="checkbox" v-model="location.smoking">
               <span>Smoking allowed</span>
           </label>
         </div>
         <div class="field">
           <label>
-              <input type="checkbox" v-model="pets">
+              <input type="checkbox" v-model="location.pets">
               <span>Pets allowed</span>
           </label>
         </div>
         <div class="field">
-          <label for="addInfo">Location on map*</label>
+          <label for="additionalInfo">Location on map*</label>
           <div class="field center margin10">
-            <button class="btn deep-purple" @click.prevent="showMap">Mark location on map</button>
+            <button class="btn deep-purple" @click.prevent="showMap">Change location on map</button>
           </div>
         </div>
         <div class="field">
           <label for="photo">Apartment photos</label>
           <input id="photo" type="file" accept="image/*" @change="onFilePicked">
         </div>
-        <img height=150 width=200 v-for="(imageData, index) in imagesData" :key="":src="imageData.url" @click="removeImg(imageData.url)">
+        <img height=150 width=200 v-for="(imageData, index) in imagesData" :key="index" :src="imageData.url" @click="removeImg(imageData.url)">
         <p v-if="feedback" class="red-text center">{{ feedback }}</p>
         <div class="field center margin10">
-          <button class="btn deep-purple">Add new location</button>
+          <button class="btn deep-purple">Save</button>
         </div>
       </form>
     </div>
@@ -72,23 +72,12 @@ import db from '@/firebase/init'
 import firebase from 'firebase'
 
 export default {
-  name: 'NewLocation',
+  name: 'EditLocation',
   data() {
     return {
-      title : "",
-      city : "",
-      street : "",
-      postalCode : "",
-      addInfo : "",
-      price : 0,
-      feedback : "",
+      location : {},
       imagesData : [],
-      lat : null,
-      lng : null,
-      marker : null,
-      pets : true,
-      smoking : true,
-      surface : 0
+      feedback : null
     }
   },
   methods: {
@@ -101,8 +90,8 @@ export default {
       document.getElementById('map').style.display = "none";
       document.getElementById('btnSave').style.display = "none";
       document.getElementById('mainContainer').style.display = "block";
-      this.lat = this.marker.position.lat();
-      this.lng = this.marker.position.lng();
+      this.location.lat = this.marker.position.lat();
+      this.location.lng = this.marker.position.lng();
     },
     onFilePicked (event) {
       const files = event.target.files;
@@ -117,58 +106,51 @@ export default {
       });
       fileReader.readAsDataURL(files[0]);
     },
-    addNewLocation() {
-      if(this.title && this.city && this.street && this.addInfo && this.lat && this.price && this.surface){
+    editData() {
+      if(this.location.title && this.location.city && this.location.street && this.location.additionalInfo && this.location.lat && this.location.price && this.location.surface){
         this.feedback = null;
-        db.collection('locations').add({
-          title: this.title,
+        let urls = this.imagesData.filter(data => data.photo == null).map(data => data.url);
+        let locId = this.location.id;
+        db.collection("locations").doc(locId).update({
+          title: this.location.title,
           ownerId: firebase.auth().currentUser.uid,
-          additionalInfo: this.addInfo,
+          additionalInfo: this.location.additionalInfo,
           creationTime: Date.now(),
-          postalCode: this.postalCode,
-          street: this.street,
-          city: this.city,
-          photoUrls: [],
-          lat : this.lat,
-          lng : this.lng,
-          price : this.price,
-          surface : this.surface,
-          smoking : this.smoking,
-          pets : this.pets
-        }).then(doc => {
-          this.title = "";
-          this.addInfo = "";
-          this.city = "";
-          this.street = "";
-          this.postalCode = "";
-          this.feedback = "";
-          this.price = 0;
-          this.surface = 0;
-          this.smoking = true;
-          this.pets = true;
-          let urls = [];
-          this.imagesData.forEach((image, i) => {
-            firebase.storage().ref(image.key).put(image.photo).then(fileData => {
-              return fileData.ref.getDownloadURL();
-            }).then(downloadURL => {
-              urls.push(downloadURL);
-              db.collection('locations').doc(doc.id).update({
-                photoUrls : urls
-              });
+          postalCode: this.location.postalCode,
+          street: this.location.street,
+          city: this.location.city,
+          photoUrls: urls,
+          lat : this.location.lat,
+          lng : this.location.lng,
+          price : this.location.price,
+          surface : this.location.surface,
+          smoking : this.location.smoking,
+          pets : this.location.pets
+        }).then(() => {
+            this.imagesData.forEach((image, i) => {
+              if(image.photo) {
+                firebase.storage().ref(image.key).put(image.photo).then(fileData => {
+                  return fileData.ref.getDownloadURL();
+                }).then(downloadURL => {
+                  urls.push(downloadURL);
+                  db.collection('locations').doc(locId).update({
+                    photoUrls : urls
+                  });
+                });
+              }
             });
-          });
-          this.$router.push({ name: 'GMap', params: { message: "Location added succesfully!" }});
+            this.$router.push({ name: 'GMap', params: { message: "Location edited succesfully!" }});
         });
       } else {
         this.feedback = 'Please fill in all mandatory fields'
       }
     },
     removeImg(url) {
+      console.log(url);
+      console.log(this.imagesData);
       this.imagesData = this.imagesData.filter(imgData => imgData.url != url);
     },
     renderMap(lat, lng) {
-      this.lat = lat;
-      this.lng = lng;
       const map = new google.maps.Map(document.getElementById('map'), {
         center: { lat, lng },
         zoom: 6,
@@ -184,18 +166,26 @@ export default {
           title: "Drag me!"
       });
     },
-    fetchGeolocation() {
-      if(navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-          this.renderMap(pos.coords.latitude, pos.coords.longitude);
-        });
-      } else {
-        this.renderMap(50, 50);
-      }
+    fetchData() {
+      db.collection('locations').doc(this.$route.params.id)
+      .get().then((doc) => {
+        if(doc.exists) {
+          this.location = doc.data();
+          this.location.id = doc.id;
+          this.imagesData = doc.data().photoUrls.map(photoUrl => {
+            return {
+              url : photoUrl
+            };
+          });
+          this.renderMap(this.location.lat, this.location.lng);
+        } else {
+          this.$router.push({ name: 'GMap', params: { message: "Location does not exists" }});
+        }
+      });
     }
   },
   mounted() {
-    this.fetchGeolocation();
+    this.fetchData();
   }
 }
 </script>

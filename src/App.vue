@@ -40,6 +40,9 @@
   .margin10 {
     margin: 10px;
   }
+  .margin20 {
+    margin: 20px;
+  }
   .container li:hover {
     background-color: rgba(255,255,255,0.5);
   }

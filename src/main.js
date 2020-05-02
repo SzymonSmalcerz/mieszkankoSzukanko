@@ -24,4 +24,4 @@ firebase.auth().onAuthStateChanged(() => {
     })
   }
 
-})
+});

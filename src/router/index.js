@@ -6,6 +6,8 @@ import Login from '@/components/auth/Login'
 import ViewProfile from '@/components/profile/ViewProfile'
 import NewLocation from '@/components/location/NewLocation'
 import ViewLocation from '@/components/location/ViewLocation'
+import UserLocations from '@/components/location/UserLocations'
+import EditLocation from '@/components/location/EditLocation'
 import firebase from 'firebase'
 
 Vue.use(Router)
@@ -31,8 +33,16 @@ const router = new Router({
       name: 'Login',
       component: Login
     },
+    // {
+    //   path: '/profile/:id',
+    //   name: 'ViewProfile',
+    //   component: ViewProfile,
+    //   meta: {
+    //     requiresAuth: true
+    //   }
+    // },
     {
-      path: '/profile/:id',
+      path: '/profile',
       name: 'ViewProfile',
       component: ViewProfile,
       meta: {
@@ -48,9 +58,25 @@ const router = new Router({
       }
     },
     {
+      path: '/userLocations',
+      name: 'UserLocations',
+      component: UserLocations,
+      meta: {
+        requiresAuth: true
+      }
+    },
+    {
       path: '/location/:id',
       name: 'ViewLocation',
       component: ViewLocation,
+      meta: {
+        requiresAuth: true
+      }
+    },
+    {
+      path: '/editLocation/:id',
+      name: 'EditLocation',
+      component: EditLocation,
       meta: {
         requiresAuth: true
       }
@@ -58,23 +84,17 @@ const router = new Router({
   ]
 })
 
-// router guards
 router.beforeEach((to, from, next) => {
-  // check to see if route has auth guard
   if(to.matched.some(rec => rec.meta.requiresAuth)){
-    // check auth state of user
     let user = firebase.auth().currentUser;
     if (user) {
-      // User is signed in. Proceed to route
       next();
     } else {
-      // No user is signed in. Redirect to login
       next({
         name: 'Login'
       });
     }
   } else {
-    // if route is not guarded by auth, proceed
     next();
   }
 })

@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="field right margin10" id="searchButton">
-      <button class="btn btn-large deep-purple" @click.prevent="toggleSearchCriteria">Advance search <i class="fa fa-search"></i></button>
+      <button class="btn btn-large deep-purple" @click.prevent="toggleSearchCriteria">Advanced search <i class="fa fa-search"></i></button>
     </div>
     <div class="map">
       <div class="google-map" id="map"></div>
@@ -123,7 +123,6 @@ export default {
         maxZoom: 15,
         minZoom: 3
       });
-
       this.userMarker = new google.maps.Marker({
         position: {
           lat: this.lat,
@@ -152,8 +151,6 @@ export default {
       }
     },
     renderLocations() {
-      console.log("RENDERING LOCATIONS");
-      console.log(this.locations);
       this.locations.forEach(data => {
         if(data.lat && data.lng){
           let marker = new google.maps.Marker({
@@ -172,7 +169,6 @@ export default {
     },
     filterLocations() {
       let that = this;
-      console.log("filter called");
       this.locations = this.allLocations.filter((loc) => {
         let isOk = true;
         if(this.searchData.priceMin) {
@@ -190,7 +186,6 @@ export default {
         if(this.searchData.maxDistance) {
           isOk = isOk && this.distance(this.userMarker.position.lat(), this.userMarker.position.lng(), loc.lat, loc.lng) < this.searchData.maxDistance;
         }
-        console.log(isOk);
         return isOk;
       })
     },
