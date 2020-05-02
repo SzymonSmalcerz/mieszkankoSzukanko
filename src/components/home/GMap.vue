@@ -1,7 +1,7 @@
 <template>
   <div>
-    <div class="field right margin10" id="searchButton">
-      <button class="btn btn-large deep-purple" @click.prevent="toggleSearchCriteria">Advanced search <i class="fa fa-search"></i></button>
+    <div class="field margin10">
+      <button id="searchButton" class="btn btn-large deep-purple" @click.prevent="toggleSearchCriteria">Advanced search <i class="fa fa-search"></i></button>
     </div>
     <div class="map">
       <div class="google-map" id="map"></div>
@@ -250,5 +250,21 @@ export default {
     top: 0;
     left: 0;
     z-index: -1;
+  }
+
+  #searchButton {
+    position: absolute;
+    margin-right: 10px;
+    right: 10px;
+  }
+
+  @media only screen and (max-width: 500px) {
+    #searchButton {
+      position: relative;
+      margin-right: 0px;
+      margin: 0 auto;
+      display: block;
+      right: 0px;
+    }
   }
 </style>
