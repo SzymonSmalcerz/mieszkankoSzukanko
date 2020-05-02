@@ -1,21 +1,28 @@
 <template>
-  <div class="view-profile container">
-    <div v-if="profile" class="card">
-      <h2 class="deep-purple-text center">{{ profile.alias }}'s Wall</h2>
-      <ul class="comments collection">
-        <li v-for="(comment, index) in comments" :key="index">
-          <div class="deep-purple-text">{{ comment.from }}</div>
-          <div class="grey-text text-darken-2">{{ comment.content }}</div>
-        </li>
-      </ul>
-      <form @submit.prevent="addComment">
-        <div class="field">
-          <label for="comment">Add a comment</label>
-          <input type="text" name="comment" v-model="newComment">
-          <p v-if="feedback" class="red-text center">{{ feedback }}</p>
-        </div>
-      </form>
-    </div>
+  <div class="my-container container" id="mainContainer">
+    <form class="card-panel" @submit.prevent="saveUserData">
+      <h2 class="center deep-purple-text">Your data</h2>
+      <div class="field">
+        <label for="name">Name</label>
+        <input id="name" type="text" v-model="profile.name">
+      </div>
+      <div class="field">
+        <label for="phoneNumber">Phone number</label>
+        <input id="phoneNumber" type="text" v-model="profile.phoneNumber">
+      </div>
+      <div class="field">
+        <label for="phoneNumber">Email*</label>
+        <input id="phoneNumber" type="text" v-model="profile.email">
+      </div>
+      <div class="field">
+        <label for="other">Other way of communication</label>
+        <input id="other" type="text" v-model="profile.otherCommunication">
+      </div>
+      <p v-if="feedback" class="red-text center">{{ feedback }}</p>
+      <div class="field center margin10">
+        <button class="btn deep-purple">Save</button>
+      </div>
+    </form>
   </div>
 </template>
 
@@ -25,76 +32,46 @@ import firebase from 'firebase'
 
 export default {
   name: 'ViewProfile',
-  data(){
+  data() {
     return{
-      profile: null,
-      newComment: null,
-      feedback: null,
-      comments: []
+      profile: {},
+      feedback: null
     }
-  },
-  created(){
-    let ref = db.collection('users')
-
-    // current user
-    ref.where('user_id', '==', firebase.auth().currentUser.uid).get()
-    .then(snapshot => {
-      snapshot.forEach(doc => {
-        this.user = doc.data()
-        this.user.id = doc.id
-      })
-    })
-
-    // profile data
-    ref.doc(this.$route.params.id).get()
-    .then(user => {
-      this.profile = user.data()
-    })
-
-    // comments
-    db.collection('comments').where('to', '==', this.$route.params.id).orderBy('time')
-    .onSnapshot((snapshot) => {
-      snapshot.docChanges().forEach(change => {
-        if(change.type == 'added'){
-          this.comments.unshift({
-            from: change.doc.data().from,
-            content: change.doc.data().content
-          })
-        }
-      })
-    })
   },
   methods: {
-    addComment(){
-      if(this.newComment){
-        this.feedback = null
-        db.collection('comments').add({
-          to: this.$route.params.id,
-          from: this.user.id,
-          content: this.newComment,
-          time: Date.now()
-        }).then(doc => {
-          this.newComment = null
-        })
+    saveUserData() {
+      if(this.profile.email) {
+        db.collection('users').where('user_id', '==', firebase.auth().currentUser.uid)
+          .get()
+          .then(snapshot => {
+            snapshot.forEach(doc => {
+              db.collection("users").doc(doc.id).update({
+                phoneNumber : this.profile.phoneNumber,
+                otherCommunication : this.profile.otherCommunication,
+                name : this.profile.name,
+                email : this.profile.email
+              });
+            });
+            this.$router.push({ name: 'GMap', params: { message: "Data saved succesfully!" }});
+          });
       } else {
-        this.feedback = 'You must enter a comment to add it'
+        this.feedback = 'Please fill in all mandatory fields'
       }
     }
+  },
+  created() {
+    db.collection('users').where('user_id', '==', firebase.auth().currentUser.uid)
+      .get()
+      .then(snapshot => {
+        snapshot.forEach(doc => {
+          this.profile = doc.data();
+          this.profile.id = doc.id;
+          this.profile.email = this.profile.email || doc.id;
+        });
+      });
   }
 }
 </script>
 
 <style>
-.view-profile .card{
-  padding: 20px;
-  margin-top: 60px;
-}
-.view-profile h2{
-  font-size: 2em;
-  margin-top: 0;
-}
-.view-profile li{
-  padding: 10px;
-  border-bottom: 1px solid #eee
-}
 </style>

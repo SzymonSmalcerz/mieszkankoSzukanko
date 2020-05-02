@@ -6,7 +6,6 @@
 </template>
 
 <script>
-  import ExpandableImage from '@/components/other/ExpandableImage'
   import Navbar from '@/components/layout/Navbar'
   export default {
     name: 'App',
@@ -24,9 +23,8 @@
     background: #eee;
   }
   .my-container {
-      max-width: 900px;
+    max-width: 600px;
   }
-
   .my-container .card{
     padding: 20px;
     margin-top: 60px;
@@ -41,6 +39,9 @@
   }
   .margin10 {
     margin: 10px;
+  }
+  .margin20 {
+    margin: 20px;
   }
   .container li:hover {
     background-color: rgba(255,255,255,0.5);
@@ -59,5 +60,8 @@
     margin-left: 0;
     margin-right: 0;
     height: 20%
+  }
+  .blured {
+    filter: blur(8px);
   }
 </style>
