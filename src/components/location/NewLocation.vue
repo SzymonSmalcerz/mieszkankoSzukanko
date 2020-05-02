@@ -3,7 +3,7 @@
     <div class="field right margin10" id="btnSave" @click="closeMap">
       <button class="btn btn-large deep-purple" @click.prevent="showMap">Save <i class="fa fa-floppy-o"></i></button>
     </div>
-    <div class="my-container container">
+    <div class="my-container container" id="mainContainer">
       <form class="card-panel" @submit.prevent="addNewLocation">
         <h2 class="center deep-purple-text">Add new location</h2>
         <div class="field">
@@ -27,12 +27,27 @@
           <input id="price" type="number" v-model="price">
         </div>
         <div class="field">
+          <label for="surface">Surface of apartment*</label>
+          <input id="surface" type="number" v-model="surface">
+        </div>
+        <div class="field">
           <label for="addInfo">Additional info*</label>
           <input id="addInfo" type="text" v-model="addInfo">
         </div>
         <div class="field">
+          <label>
+              <input type="checkbox" v-model="smoking">
+              <span>Smoking allowed</span>
+          </label>
+        </div>
+        <div class="field">
+          <label>
+              <input type="checkbox" v-model="pets">
+              <span>Pets allowed</span>
+          </label>
+        </div>
+        <div class="field">
           <label for="addInfo">Location on map*</label>
-          <div class="google-map-input" id="map"></div>
           <div class="field center margin10">
             <button class="btn deep-purple" @click.prevent="showMap">Mark location on map</button>
           </div>
@@ -48,6 +63,7 @@
         </div>
       </form>
     </div>
+    <div class="google-map-input" id="map"></div>
   </div>
 </template>
 
@@ -69,17 +85,22 @@ export default {
       imagesData : [],
       lat : null,
       lng : null,
-      marker : null
+      marker : null,
+      pets : true,
+      smoking : true,
+      surface : 0
     }
   },
   methods: {
     showMap(){
       document.getElementById('map').style.display = "block";
       document.getElementById('btnSave').style.display = "block";
+      document.getElementById('mainContainer').style.display = "none";
     },
     closeMap(){
       document.getElementById('map').style.display = "none";
       document.getElementById('btnSave').style.display = "none";
+      document.getElementById('mainContainer').style.display = "block";
       this.lat = this.marker.position.lat();
       this.lng = this.marker.position.lng();
     },
@@ -97,8 +118,7 @@ export default {
       fileReader.readAsDataURL(files[0]);
     },
     addNewLocation() {
-      // if(this.title && this.city && this.street && this.addInfo && this.lat && this.price){
-        if(true){
+      if(this.title && this.city && this.street && this.addInfo && this.lat && this.price && this.surface){
         this.feedback = null;
         db.collection('locations').add({
           title: this.title,
@@ -111,7 +131,10 @@ export default {
           photoUrls: [],
           lat : this.lat,
           lng : this.lng,
-          price : this.price
+          price : this.price,
+          surface : this.surface,
+          smoking : this.smoking,
+          pets : this.pets
         }).then(doc => {
           this.title = "";
           this.addInfo = "";
@@ -120,6 +143,9 @@ export default {
           this.postalCode = "";
           this.feedback = "";
           this.price = 0;
+          this.surface = 0;
+          this.smoking = true;
+          this.pets = true;
           let urls = [];
           this.imagesData.forEach((image, i) => {
             firebase.storage().ref(image.key).put(image.photo).then(fileData => {
@@ -131,6 +157,7 @@ export default {
               });
             });
           });
+          this.$router.push({ name: 'GMap', params: { message: "Location added succesfully!" }});
         });
       } else {
         this.feedback = 'Please fill in all mandatory fields'
@@ -189,5 +216,6 @@ export default {
     top: 0;
     left: 0;
     display: none;
+    z-index: 1;
   }
 </style>
