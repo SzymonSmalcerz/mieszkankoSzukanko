@@ -64,4 +64,14 @@
   .blured {
     filter: blur(8px);
   }
+  .auth{
+    max-width: 400px;
+    margin-top: 60px;
+  }
+  .auth h2{
+    font-size: 2.4em;
+  }
+  .auth .field{
+    margin-bottom: 16px;
+  }
 </style>

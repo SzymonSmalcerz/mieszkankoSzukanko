@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import GMap from '@/components/home/GMap'
+import AllLocations from '@/components/location/AllLocations'
 import Signup from '@/components/auth/Signup'
 import Login from '@/components/auth/Login'
 import ViewProfile from '@/components/profile/ViewProfile'
@@ -17,8 +17,8 @@ const router = new Router({
   routes: [
     {
       path: '/',
-      name: 'GMap',
-      component: GMap,
+      name: 'AllLocations',
+      component: AllLocations,
       meta: {
         requiresAuth: true
       }
