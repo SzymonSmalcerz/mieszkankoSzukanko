@@ -5,7 +5,6 @@ import VueImg from 'v-img';
 import App from './App'
 import router from './router'
 import firebase from 'firebase'
-import 'material-design-icons-iconfont/dist/material-design-icons.css'
 
 Vue.config.productionTip = false
 Vue.use(VueImg);

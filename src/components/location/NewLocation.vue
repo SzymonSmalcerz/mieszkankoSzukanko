@@ -7,6 +7,12 @@
       <form class="card-panel" @submit.prevent="addNewLocation">
         <h2 class="center deep-purple-text">Add new location</h2>
         <div class="field">
+          <label for="addInfo">Location on map*</label>
+          <div class="field center margin10">
+            <button class="btn deep-purple" @click.prevent="showMap">Mark location on map</button>
+          </div>
+        </div>
+        <div class="field">
           <label for="title">Title*</label>
           <input id="title" type="text" v-model="title">
         </div>
@@ -47,17 +53,11 @@
           </label>
         </div>
         <div class="field">
-          <label for="addInfo">Location on map*</label>
-          <div class="field center margin10">
-            <button class="btn deep-purple" @click.prevent="showMap">Mark location on map</button>
-          </div>
-        </div>
-        <div class="field">
           <label for="photo">Apartment photos</label>
           <input id="photo" type="file" accept="image/*" @change="onFilePicked">
         </div>
         <img height=150 width=200 v-for="(imageData, index) in imagesData" :key="":src="imageData.url" @click="removeImg(imageData.url)">
-        <p v-if="feedback" class="red-text center">{{ feedback }}</p>
+        <p v-if="errorMessage" class="red-text center">{{ errorMessage }}</p>
         <div class="field center margin10">
           <button class="btn deep-purple">Add new location</button>
         </div>
@@ -81,7 +81,7 @@ export default {
       postalCode : "",
       addInfo : "",
       price : 0,
-      feedback : "",
+      errorMessage : "",
       imagesData : [],
       lat : null,
       lng : null,
@@ -103,6 +103,7 @@ export default {
       document.getElementById('mainContainer').style.display = "block";
       this.lat = this.marker.position.lat();
       this.lng = this.marker.position.lng();
+      this.fetchLocationDataBasedOnLatLng();
     },
     onFilePicked (event) {
       const files = event.target.files;
@@ -119,7 +120,7 @@ export default {
     },
     addNewLocation() {
       if(this.title && this.city && this.street && this.addInfo && this.lat && this.price && this.surface){
-        this.feedback = null;
+        this.errorMessage = null;
         db.collection('locations').add({
           title: this.title,
           ownerId: firebase.auth().currentUser.uid,
@@ -141,7 +142,7 @@ export default {
           this.city = "";
           this.street = "";
           this.postalCode = "";
-          this.feedback = "";
+          this.errorMessage = "";
           this.price = 0;
           this.surface = 0;
           this.smoking = true;
@@ -157,10 +158,10 @@ export default {
               });
             });
           });
-          this.$router.push({ name: 'GMap', params: { message: "Location added succesfully!" }});
+          this.$router.push({ name: 'AllLocations', params: { message: "Location added succesfully!" }});
         });
       } else {
-        this.feedback = 'Please fill in all mandatory fields'
+        this.errorMessage = 'Please fill in all mandatory fields'
       }
     },
     removeImg(url) {
@@ -192,7 +193,34 @@ export default {
       } else {
         this.renderMap(50, 50);
       }
-    }
+    },
+    fetchLocationDataBasedOnLatLng() {
+      var url = `https://maps.googleapis.com/maps/api/geocode/json?`
+        + `latlng=${this.lat}%2C${this.lng}`
+        +  `&language=en%27`
+        + `&key=AIzaSyD3PvboTyHdrjFFm8ExoEyFruWZhu3wIo0`;
+      let xhr = new XMLHttpRequest();
+      xhr.open('GET', "https://warm-refuge-39243.herokuapp.com/" + url);
+      xhr.send();
+      let that = this;
+      xhr.onload = function() {
+        if (xhr.status == 200) {
+          JSON.parse(xhr.response).results.forEach(result => {
+            result.address_components.forEach(adrComponent => {
+              if(adrComponent.types != null) {
+                if(adrComponent.types.includes("route")) {
+                  that.street = that.street || adrComponent.long_name;
+                } else if(adrComponent.types.includes("administrative_area_level_2")) {
+                  that.city = that.city || adrComponent.long_name;
+                } else if(adrComponent.types.includes("postal_code")) {
+                  that.postalCode = that.postalCode || adrComponent.long_name;
+                }
+              }
+            });
+          });
+        }
+      };
+    },
   },
   mounted() {
     this.fetchGeolocation();

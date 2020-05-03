@@ -18,7 +18,7 @@
         <label for="other">Other way of communication</label>
         <input id="other" type="text" v-model="profile.otherCommunication">
       </div>
-      <p v-if="feedback" class="red-text center">{{ feedback }}</p>
+      <p v-if="errorMessage" class="red-text center">{{ errorMessage }}</p>
       <div class="field center margin10">
         <button class="btn deep-purple">Save</button>
       </div>
@@ -35,7 +35,7 @@ export default {
   data() {
     return{
       profile: {},
-      feedback: null
+      errorMessage: null
     }
   },
   methods: {
@@ -46,16 +46,16 @@ export default {
           .then(snapshot => {
             snapshot.forEach(doc => {
               db.collection("users").doc(doc.id).update({
-                phoneNumber : this.profile.phoneNumber,
-                otherCommunication : this.profile.otherCommunication,
-                name : this.profile.name,
-                email : this.profile.email
+                phoneNumber : this.profile.phoneNumber || "",
+                otherCommunication : this.profile.otherCommunication || "",
+                name : this.profile.name || "",
+                email : this.profile.email || ""
               });
             });
-            this.$router.push({ name: 'GMap', params: { message: "Data saved succesfully!" }});
+            this.$router.push({ name: 'AllLocations', params: { message: "Data saved succesfully!" }});
           });
       } else {
-        this.feedback = 'Please fill in all mandatory fields'
+        this.errorMessage = 'Please fill in all mandatory fields'
       }
     }
   },

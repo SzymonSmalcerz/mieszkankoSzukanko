@@ -2,7 +2,7 @@
   <div class="navbar" id ="navbar">
     <nav class="deep-purple darken-1">
       <div class="container">
-        <router-link :to="{ name: 'GMap' }" class="left">
+        <router-link :to="{ name: 'AllLocations' }" class="left">
           <span class="brand-logo">
             <i class="fa fa-home" aria-hidden="true" style="margin: 20px 0 0 0;"></i>
             <span id="logo">MieszkankoSzukanko</span>
@@ -45,14 +45,9 @@ export default {
     }
   },
   created(){
-    // let user = firebase.auth().currentUser
-    firebase.auth().onAuthStateChanged((user) => {
-      if(user){
-        this.user = user
-      } else {
-        this.user = null
-      }
-    })
+    firebase.auth().onAuthStateChanged(fetchedUser => {
+      this.user = fetchedUser;
+    });
   },
   methods: {
     toggleBurger() {

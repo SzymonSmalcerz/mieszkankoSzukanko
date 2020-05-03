@@ -7,6 +7,12 @@
       <form class="card-panel" @submit.prevent="editData">
         <h2 class="center deep-purple-text">EditLocation</h2>
         <div class="field">
+          <label for="additionalInfo">Location on map*</label>
+          <div class="field center margin10">
+            <button class="btn deep-purple" @click.prevent="showMap">Change location on map</button>
+          </div>
+        </div>
+        <div class="field">
           <label for="title">Title*</label>
           <input id="title" type="text" v-model="location.title">
         </div>
@@ -47,17 +53,11 @@
           </label>
         </div>
         <div class="field">
-          <label for="additionalInfo">Location on map*</label>
-          <div class="field center margin10">
-            <button class="btn deep-purple" @click.prevent="showMap">Change location on map</button>
-          </div>
-        </div>
-        <div class="field">
           <label for="photo">Apartment photos</label>
           <input id="photo" type="file" accept="image/*" @change="onFilePicked">
         </div>
         <img height=150 width=200 v-for="(imageData, index) in imagesData" :key="index" :src="imageData.url" @click="removeImg(imageData.url)">
-        <p v-if="feedback" class="red-text center">{{ feedback }}</p>
+        <p v-if="errorMessage" class="red-text center">{{ errorMessage }}</p>
         <div class="field center margin10">
           <button class="btn deep-purple">Save</button>
         </div>
@@ -77,7 +77,7 @@ export default {
     return {
       location : {},
       imagesData : [],
-      feedback : null
+      errorMessage : null
     }
   },
   methods: {
@@ -92,6 +92,7 @@ export default {
       document.getElementById('mainContainer').style.display = "block";
       this.location.lat = this.marker.position.lat();
       this.location.lng = this.marker.position.lng();
+      this.fetchLocationDataBasedOnLatLng();
     },
     onFilePicked (event) {
       const files = event.target.files;
@@ -108,7 +109,7 @@ export default {
     },
     editData() {
       if(this.location.title && this.location.city && this.location.street && this.location.additionalInfo && this.location.lat && this.location.price && this.location.surface){
-        this.feedback = null;
+        this.errorMessage = null;
         let urls = this.imagesData.filter(data => data.photo == null).map(data => data.url);
         let locId = this.location.id;
         db.collection("locations").doc(locId).update({
@@ -139,15 +140,13 @@ export default {
                 });
               }
             });
-            this.$router.push({ name: 'GMap', params: { message: "Location edited succesfully!" }});
+            this.$router.push({ name: 'AllLocations', params: { message: "Location edited succesfully!" }});
         });
       } else {
-        this.feedback = 'Please fill in all mandatory fields'
+        this.errorMessage = 'Please fill in all mandatory fields'
       }
     },
     removeImg(url) {
-      console.log(url);
-      console.log(this.imagesData);
       this.imagesData = this.imagesData.filter(imgData => imgData.url != url);
     },
     renderMap(lat, lng) {
@@ -179,10 +178,40 @@ export default {
           });
           this.renderMap(this.location.lat, this.location.lng);
         } else {
-          this.$router.push({ name: 'GMap', params: { message: "Location does not exists" }});
+          this.$router.push({ name: 'AllLocations', params: { message: "Location does not exists" }});
         }
       });
-    }
+    },
+    fetchLocationDataBasedOnLatLng() {
+      var url = `https://maps.googleapis.com/maps/api/geocode/json?`
+        + `latlng=${this.location.lat}%2C${this.location.lng}`
+        +  `&language=en%27`
+        + `&key=AIzaSyD3PvboTyHdrjFFm8ExoEyFruWZhu3wIo0`;
+      let xhr = new XMLHttpRequest();
+      xhr.open('GET', "https://warm-refuge-39243.herokuapp.com/" + url);
+      xhr.send();
+      let that = this.location;
+      this.location.city = null;
+      this.location.postalCode = null;
+      this.location.street = null;
+      xhr.onload = function() {
+        if (xhr.status == 200) {
+          JSON.parse(xhr.response).results.forEach(result => {
+            result.address_components.forEach(adrComponent => {
+              if(adrComponent.types != null) {
+                if(adrComponent.types.includes("route") && !adrComponent.long_name.startsWith("Unnamed")) {
+                  that.street = that.street || adrComponent.long_name;
+                } else if(adrComponent.types.includes("administrative_area_level_2") && !adrComponent.long_name.startsWith("Unnamed")) {
+                  that.city = that.city || adrComponent.long_name;
+                } else if(adrComponent.types.includes("postal_code") && !adrComponent.long_name.startsWith("Unnamed")) {
+                  that.postalCode = that.postalCode || adrComponent.long_name;
+                }
+              }
+            });
+          });
+        }
+      };
+    },
   },
   mounted() {
     this.fetchData();

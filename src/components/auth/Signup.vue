@@ -10,7 +10,7 @@
         <label for="password">Password</label>
         <input id="password" type="password" v-model="password">
       </div>
-      <p v-if="feedback" class="red-text center">{{ feedback }}</p>
+      <p v-if="errorMessage" class="red-text center">{{ errorMessage }}</p>
       <div class="field center">
         <button class="btn deep-purple">Signup</button>
       </div>
@@ -20,7 +20,6 @@
 
 <script>
 import db from '@/firebase/init'
-import slugify from 'slugify'
 import firebase from 'firebase'
 
 export default {
@@ -29,18 +28,18 @@ export default {
     return{
       email: null,
       password: null,
-      feedback: null,
+      errorMessage: null,
       slug: null
     }
   },
   methods: {
     signup(){
       if(this.email && this.password){
-        this.feedback = null;
+        this.errorMessage = null;
         let ref = db.collection('users').doc(this.email);
         ref.get().then(doc => {
           if(doc.exists){
-            this.feedback = 'This email is already taken';
+            this.errorMessage = 'This email is already taken';
           } else {
             firebase.auth().createUserWithEmailAndPassword(this.email, this.password)
             .then(authDoc => {
@@ -49,15 +48,15 @@ export default {
                 user_id: authDoc.user.uid
               })
             }).then(() => {
-              this.$router.push({ name: 'GMap' })
+              this.$router.push({ name: 'AllLocations' })
             })
             .catch(err => {
-              this.feedback = err.message
+              this.errorMessage = err.message
             })
           }
         })
       } else {
-        this.feedback = 'Please fill in all fields'
+        this.errorMessage = 'Please fill in all fields'
       }
     }
   }
